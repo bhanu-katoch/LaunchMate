@@ -1,35 +1,69 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { useEffect, useState } from "react";
+import Login from "./pages/Login";
+import Signup from "./pages/Signup";
+import Chat from "./pages/Chat";
+import { apiFetch } from "./api"; // your axios wrapper with { withCredentials: true }
 
 function App() {
-  const [count, setCount] = useState(0)
+  const [loading, setLoading] = useState(true);
+  const [loggedIn, setLoggedIn] = useState(false);
+
+  useEffect(() => {
+    async function checkAuth() {
+      try {
+        // Try accessing any protected route (for example /chat/init)
+        await apiFetch("/chat/ping");
+        setLoggedIn(true);
+      } catch {
+        setLoggedIn(false);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    checkAuth();
+  }, []);
+
+  if (loading) return <p>Loading...</p>;
 
   return (
-    <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.jsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
-  )
+    <Routes>
+      {/* Protected route */}
+      <Route
+        path="/"
+        element={loggedIn ? <Chat /> : <Navigate to="/login" replace />}
+      />
+
+      {/* Public routes */}
+      <Route
+        path="/login"
+        element={
+          !loggedIn ? (
+            <Login setLoggedIn={setLoggedIn} />
+          ) : (
+            <Navigate to="/" replace />
+          )
+        }
+      />
+      <Route
+        path="/signup"
+        element={
+          !loggedIn ? (
+            <Signup setLoggedIn={setLoggedIn} />
+          ) : (
+            <Navigate to="/" replace />
+          )
+        }
+      />
+
+      {/* Catch-all redirect */}
+      <Route
+        path="*"
+        element={<Navigate to={loggedIn ? "/" : "/login"} replace />}
+      />
+    </Routes>
+  );
 }
 
-export default App
+export default App;
