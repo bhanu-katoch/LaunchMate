@@ -1,5 +1,5 @@
 import Chat from "../models/Chat.js";
-import { callAIClient } from "../utils/aiClient.js";
+import { runProductLaunchAgent } from "../utils/aiClient.js";
 
 /**
  * Ping - verify authentication (used by frontend)
@@ -22,18 +22,18 @@ export const sendMessage = async (req, res) => {
     }
 
     // Call external AI API
-    const aiResponse = await callAIClient(message);
+    const aiResponse = await runProductLaunchAgent(message);
 
-    // Save conversation to DB
-    const chat = new Chat({
-      userId: req.user.id,
-      userMessage: message,
-      aiResponse,
-      createdAt: new Date(),
-    });
-    await chat.save();
+    // // Save conversation to DB
+    // const chat = new Chat({
+    //   userId: req.user.id,
+    //   userMessage: message,
+    //   aiResponse,
+    //   createdAt: new Date(),
+    // });
+    // await chat.save(); 
 
-    res.json({ success: true, response: aiResponse });
+    res.json({ success: true, ...aiResponse});
   } catch (err) {
     console.error("Error in sendMessage:", err);
     res.status(500).json({ error: "Failed to process chat" });

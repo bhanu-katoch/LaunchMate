@@ -10,7 +10,7 @@ const router = express.Router();
 
 // Routes
 router.post("/", (req, res) => {
-  res.send({ text: "hi connected succesfully!" });
+  res.send({ data: "hi connected succesfully!" });
 });
 router.get("/ping", pingUser);
 router.post("/send", sendMessage);
