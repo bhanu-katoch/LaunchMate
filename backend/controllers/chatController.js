@@ -24,14 +24,14 @@ export const sendMessage = async (req, res) => {
     // Call external AI API
     const aiResponse = await runProductLaunchAgent(message);
 
-    // // Save conversation to DB
-    // const chat = new Chat({
-    //   userId: req.user.id,
-    //   userMessage: message,
-    //   aiResponse,
-    //   createdAt: new Date(),
-    // });
-    // await chat.save(); 
+    // Save chat
+    const chat = new Chat({
+      response:aiResponse,
+      createdBy: req.user._id,
+      prompt:message,
+    });
+
+    await chat.save();
 
     res.json({ success: true, ...aiResponse});
   } catch (err) {
@@ -47,9 +47,7 @@ export const getChatHistory = async (req, res) => {
   try {
     if (!req.user) return res.status(401).json({ error: "Unauthorized" });
 
-    const chats = await Chat.find({ userId: req.user.id })
-      .sort({ createdAt: -1 })
-      .limit(50);
+    const chats = await Chat.find({ createdBy: req.user._id })
 
     res.json({ success: true, chats });
   } catch (err) {
@@ -65,7 +63,7 @@ export const clearChatHistory = async (req, res) => {
   try {
     if (!req.user) return res.status(401).json({ error: "Unauthorized" });
 
-    await Chat.deleteMany({ userId: req.user.id });
+    await Chat.deleteMany({ createdBy: req.user._id });
     res.json({ success: true, message: "Chat history cleared" });
   } catch (err) {
     console.error("Error in clearChatHistory:", err);
