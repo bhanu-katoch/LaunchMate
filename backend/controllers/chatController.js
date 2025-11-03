@@ -26,14 +26,14 @@ export const sendMessage = async (req, res) => {
 
     // Save chat
     const chat = new Chat({
-      response:aiResponse,
+      response: aiResponse,
       createdBy: req.user._id,
-      prompt:message,
+      prompt: message,
     });
 
     await chat.save();
 
-    res.json({ success: true, ...aiResponse});
+    res.json({ success: true, ...aiResponse });
   } catch (err) {
     console.error("Error in sendMessage:", err);
     res.status(500).json({ error: "Failed to process chat" });
@@ -46,9 +46,9 @@ export const sendMessage = async (req, res) => {
 export const getChatHistory = async (req, res) => {
   try {
     if (!req.user) return res.status(401).json({ error: "Unauthorized" });
-    const chats = await Chat.find({ createdBy: req.user._id })
-    console.log("user",req.user);
-    console.log(chats)
+    const chats = await Chat.find({ createdBy: req.user._id });
+    // console.log("user",req.user);
+    // console.log(chats)
     res.json({ success: true, chats });
   } catch (err) {
     console.error("Error in getChatHistory:", err);
