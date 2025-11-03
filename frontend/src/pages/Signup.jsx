@@ -27,7 +27,7 @@ export default function Signup() {
     <div className="fixed inset-0 flex items-center justify-center bg-gray-100 dark:bg-[#1a1a1a] transition-colors duration-500">
       <div className="w-full max-w-md bg-white dark:bg-[#2c2c2c] text-gray-900 dark:text-gray-100 shadow-2xl rounded-2xl p-8 transform transition-all hover:scale-[1.02] hover:shadow-indigo-500/10">
         <h2 className="text-3xl font-bold text-left mb-6 text-indigo-600 dark:text-indigo-400">
-          Create an Account
+          Join  <span className=" text-indigo-500">LaunchMate</span> 
         </h2>
 
         <form onSubmit={handleSubmit} className="space-y-5">

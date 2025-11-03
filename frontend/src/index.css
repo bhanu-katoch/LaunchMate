@@ -56,13 +56,13 @@ button:focus-visible {
 
 @media (prefers-color-scheme: dark) {
   :root {
-    color: rgba(255, 255, 255, 0.87);
-    background-color: #242424; /* ✅ Proper dark background */
+    color: #213547;
+    background-color: #ffffff;
   }
   a:hover {
     color: #747bff;
   }
   button {
-    background-color: #1a1a1a;
+    background-color: #f9f9f9;
   }
 }

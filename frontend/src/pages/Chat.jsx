@@ -32,7 +32,7 @@ const sectionIcons = {
 };
 
 const CACHE_KEY = "launchmate_chat_cache_v1";
-const CACHE_LIMIT = 20;
+const CACHE_LIMIT = 2;
 
 export default function Chat() {
   const navigate = useNavigate();
@@ -315,7 +315,14 @@ export default function Chat() {
             >
               <Menu />
             </button>
-            <h1 className="text-2xl font-bold text-indigo-600 dark:text-indigo-400">
+            <h1
+              onClick={() => {
+                document
+                  .querySelector("main")
+                  ?.scrollTo({ top: 0, behavior: "smooth" });
+              }}
+              className="text-2xl font-bold text-indigo-600 dark:text-indigo-400 cursor-pointer hover:opacity-80 transition"
+            >
               LaunchMate
             </h1>
           </div>
@@ -461,29 +468,37 @@ export default function Chat() {
 
         <form
           onSubmit={handleSend}
-          className="p-4 bg-white dark:bg-[#222] border-t border-gray-200 dark:border-gray-700 flex items-center gap-3"
+          className="p-4 bg-white dark:bg-[#222] border-t border-gray-200 dark:border-gray-700 flex items-end gap-3"
         >
-          <input
-            type="text"
-            placeholder={
-              loading
-                ? "Please wait for the response..."
-                : "Describe your product idea..."
-            }
-            value={prompt}
-            onChange={(e) => setPrompt(e.target.value)}
-            className={`flex-1 px-4 py-2 rounded-xl border border-gray-300 dark:border-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500
-      ${
-        loading
-          ? "bg-gray-200 dark:bg-[#333] opacity-70 cursor-not-allowed"
-          : "bg-gray-100 dark:bg-[#333]"
-      }`}
-            disabled={loading} // ⛔ disables input during loading
-          />
+          <div className="flex-1 relative">
+            <textarea
+              placeholder={
+                loading
+                  ? "Please wait for the response..."
+                  : "Describe your product idea..."
+              }
+              value={prompt}
+              onChange={(e) => setPrompt(e.target.value)}
+              rows={1}
+              className={`w-full resize-none overflow-y-auto max-h-40 px-4 py-3 rounded-xl border border-gray-300 dark:border-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm leading-relaxed
+        ${
+          loading
+            ? "bg-gray-200 dark:bg-[#333] opacity-70 cursor-not-allowed"
+            : "bg-gray-100 dark:bg-[#333]"
+        }`}
+              disabled={loading}
+              onInput={(e) => {
+                // Auto-resize height
+                e.target.style.height = "auto";
+                e.target.style.height = e.target.scrollHeight + "px";
+              }}
+            />
+          </div>
+
           <button
             type="submit"
-            disabled={loading || !prompt.trim()} // also disable when no prompt
-            className="bg-indigo-600 hover:bg-indigo-700 text-white p-2 rounded-xl transition disabled:opacity-50 disabled:cursor-not-allowed"
+            disabled={loading || !prompt.trim()}
+            className="bg-indigo-600 hover:bg-indigo-700 text-white p-3 rounded-xl transition disabled:opacity-50 disabled:cursor-not-allowed shrink-0"
           >
             {loading ? (
               <Loader2 className="animate-spin" size={20} />
@@ -497,44 +512,90 @@ export default function Chat() {
   );
 }
 
-/** 🎨 Recursive renderer for structured data */
-function SectionRenderer({ data }) {
+/** 🌌 Modern Glassy Gradient Recursive Renderer */
+function SectionRenderer({ data, depth = 0 }) {
+  // 1️⃣ Handle plain text
   if (typeof data === "string") {
     return (
-      <p className="leading-relaxed whitespace-pre-line text-gray-800 dark:text-gray-200">
+      <p className="text-gray-800 dark:text-gray-100 leading-relaxed tracking-wide whitespace-pre-line">
         {data}
       </p>
     );
   }
 
+  // 2️⃣ Handle arrays
   if (Array.isArray(data)) {
-    return (
-      <ul className="list-disc pl-6 space-y-1">
-        {data.map((item, i) => (
-          <li key={i}>
-            <SectionRenderer data={item} />
-          </li>
-        ))}
-      </ul>
-    );
-  }
+    const isObjectArray = data.every((item) => typeof item === "object");
 
-  if (typeof data === "object" && data !== null) {
-    return (
-      <div className="space-y-3">
-        {Object.entries(data).map(([key, value]) => (
-          <div key={key}>
-            <p className="font-medium text-gray-900 dark:text-gray-100">
-              {key.replaceAll("_", " ")}:
-            </p>
-            <div className="pl-4 border-l border-gray-300 dark:border-gray-700 ml-1">
-              <SectionRenderer data={value} />
+    if (isObjectArray) {
+      return (
+        <div className="grid md:grid-cols-2 gap-5">
+          {data.map((item, i) => (
+            <div
+              key={i}
+              className="rounded-2xl bg-white/20 dark:bg-white/5 backdrop-blur-md p-5 shadow-md border border-white/30 dark:border-white/10 hover:shadow-lg transition-all"
+            >
+              <SectionRenderer data={item} depth={depth + 1} />
             </div>
+          ))}
+        </div>
+      );
+    }
+
+    // Beautified bullet-style list
+    return (
+      <div className="flex flex-col space-y-3 mt-2">
+        {data.map((item, i) => (
+          <div key={i} className="flex items-start space-x-3">
+            <span className="h-2 w-2 mt-2 bg-linear-to-r from-indigo-500 to-purple-500 rounded-full shadow-md shrink-0"></span>
+            <SectionRenderer data={item} depth={depth + 1} />
           </div>
         ))}
       </div>
     );
   }
 
-  return <p>{String(data)}</p>;
+  // 3️⃣ Handle objects
+  if (typeof data === "object" && data !== null) {
+    const entries = Object.entries(data);
+
+    return (
+      <div className="space-y-6">
+        {entries.map(([key, value], i) => {
+          const displayTitle = key
+            .replaceAll("_", " ")
+            .replace(/\b\w/g, (c) => c.toUpperCase());
+
+          // Heading hierarchy: larger for top-level, smaller for nested
+          const headingClass =
+            depth === 0
+              ? "text-3xl font-extrabold tracking-wide bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-500 bg-clip-text text-transparent"
+              : depth === 1
+              ? "text-2xl font-bold bg-gradient-to-r from-indigo-500 to-purple-500 bg-clip-text text-transparent"
+              : "text-lg font-semibold text-gray-800 dark:text-gray-100";
+
+          // Transparent gradient glass card
+          return (
+            <div
+              key={i}
+              className="rounded-2xl bg-linear-to-br from-white/30 via-white/10 to-white/5 dark:from-[#1c1c1c]/40 dark:via-[#141414]/30 dark:to-[#0e0e0e]/30 backdrop-blur-md border border-white/30 dark:border-white/10 p-6 shadow-md hover:shadow-lg transition-all"
+            >
+              <h3 className={`${headingClass} mb-3`}>{displayTitle}</h3>
+
+              <div className="pl-3 border-l-2 border-indigo-400/30 dark:border-indigo-500/40 space-y-3">
+                <SectionRenderer data={value} depth={depth + 1} />
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    );
+  }
+
+  // 4️⃣ Fallback
+  return (
+    <p className="text-gray-800 dark:text-gray-200 leading-relaxed">
+      {String(data)}
+    </p>
+  );
 }
