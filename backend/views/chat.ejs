@@ -1,0 +1,40 @@
+<%- include('partials/header') %>
+
+<div class="card" style="max-width: 900px; margin: 24px auto">
+  <h2 style="margin-top: 0">AI Chat</h2>
+  <p style="color: var(--muted); margin-bottom: 12px">
+    Ask anything about your product launch.
+  </p>
+
+  <div id="chat-area">
+    <div
+      id="messages"
+      class="card"
+      style="
+        padding: 12px;
+        height: 360px;
+        overflow: auto;
+        background: transparent;
+      "
+    ></div>
+
+    <form
+      id="chat-form"
+      style="display: flex; gap: 8px; margin-top: 12px; align-items: center"
+    >
+      <input
+        id="message-input"
+        placeholder="Type a message..."
+        autocomplete="off"
+      />
+      <button class="btn" type="submit">Send</button>
+    </form>
+
+    <div style="margin-top: 12px; display: flex; gap: 8px">
+      <button id="load-history" class="btn ghost small">Load history</button>
+      <button id="clear-history" class="btn ghost small">Clear history</button>
+    </div>
+  </div>
+</div>
+
+<%- include('partials/footer') %>

@@ -47,7 +47,8 @@ export const getChatHistory = async (req, res) => {
   try {
     if (!req.user) return res.status(401).json({ error: "Unauthorized" });
     const chats = await Chat.find({ createdBy: req.user._id })
-
+    console.log("user",req.user);
+    console.log(chats)
     res.json({ success: true, chats });
   } catch (err) {
     console.error("Error in getChatHistory:", err);
