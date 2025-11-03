@@ -17,8 +17,6 @@ export default function Signup() {
         body: JSON.stringify({ username, email, password }),
       });
       setMessage(data.message);
-
-      // after successful signup → redirect to login page
       setTimeout(() => navigate("/login"), 1500);
     } catch (err) {
       setMessage(err.message);
@@ -26,70 +24,85 @@ export default function Signup() {
   }
 
   return (
-    <div style={styles.container}>
-      <h2 style={styles.title}>Sign Up</h2>
-      <form onSubmit={handleSubmit} style={styles.form}>
-        <input
-          style={styles.input}
-          type="text"
-          placeholder="Username"
-          value={username}
-          onChange={(e) => setUsername(e.target.value)}
-          required
-        />
-        <input
-          style={styles.input}
-          type="email"
-          placeholder="Email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          required
-        />
-        <input
-          style={styles.input}
-          type="password"
-          placeholder="Password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          required
-        />
-        <button style={styles.button} type="submit">
-          Sign Up
-        </button>
-      </form>
-      {message && <p style={styles.message}>{message}</p>}
-      <p>
-        Already have an account?{" "}
-        <span style={styles.link} onClick={() => navigate("/login")}>
-          Login
-        </span>
-      </p>
+    <div className="fixed inset-0 flex items-center justify-center bg-gray-100 dark:bg-[#1a1a1a] transition-colors duration-500">
+      <div className="w-full max-w-md bg-white dark:bg-[#2c2c2c] text-gray-900 dark:text-gray-100 shadow-2xl rounded-2xl p-8 transform transition-all hover:scale-[1.02] hover:shadow-indigo-500/10">
+        <h2 className="text-3xl font-bold text-left mb-6 text-indigo-600 dark:text-indigo-400">
+          Create an Account
+        </h2>
+
+        <form onSubmit={handleSubmit} className="space-y-5">
+          <div>
+            <label className="block text-left text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">
+              Username
+            </label>
+            <input
+              type="text"
+              placeholder="JohnDoe"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              required
+              className="w-full px-4 py-2 border border-gray-300 dark:border-gray-700 rounded-lg bg-transparent focus:ring-2 focus:ring-indigo-400 focus:outline-none placeholder-gray-400 dark:placeholder-gray-500"
+            />
+          </div>
+
+          <div>
+            <label className="block text-left text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">
+              Email
+            </label>
+            <input
+              type="email"
+              placeholder="you@example.com"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+              className="w-full px-4 py-2 border border-gray-300 dark:border-gray-700 rounded-lg bg-transparent focus:ring-2 focus:ring-indigo-400 focus:outline-none placeholder-gray-400 dark:placeholder-gray-500"
+            />
+          </div>
+
+          <div>
+            <label className="block text-left text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">
+              Password
+            </label>
+            <input
+              type="password"
+              placeholder="••••••••"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+              className="w-full px-4 py-2 border border-gray-300 dark:border-gray-700 rounded-lg bg-transparent focus:ring-2 focus:ring-indigo-400 focus:outline-none placeholder-gray-400 dark:placeholder-gray-500"
+            />
+          </div>
+
+          <button
+            type="submit"
+            className="w-full py-2 bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-600 text-white font-semibold rounded-lg transition duration-300"
+          >
+            Sign Up
+          </button>
+        </form>
+
+        {message && (
+          <p
+            className={`mt-4 text-center font-medium ${
+              message.toLowerCase().includes("success")
+                ? "text-green-500"
+                : "text-red-500"
+            }`}
+          >
+            {message}
+          </p>
+        )}
+
+        <p className="mt-6 text-sm text-center text-gray-600 dark:text-gray-400">
+          Already have an account?{" "}
+          <span
+            onClick={() => navigate("/login")}
+            className="text-indigo-600 dark:text-indigo-400 hover:underline cursor-pointer"
+          >
+            Login
+          </span>
+        </p>
+      </div>
     </div>
   );
 }
-
-const styles = {
-  container: {
-    maxWidth: "400px",
-    margin: "80px auto",
-    padding: "30px",
-    border: "1px solid #ddd",
-    borderRadius: "10px",
-    textAlign: "center",
-    boxShadow: "0 0 10px rgba(0,0,0,0.1)",
-    fontFamily: "sans-serif",
-  },
-  title: { marginBottom: "20px" },
-  form: { display: "flex", flexDirection: "column", gap: "10px" },
-  input: { padding: "10px", borderRadius: "5px", border: "1px solid #ccc" },
-  button: {
-    padding: "10px",
-    background: "#007bff",
-    color: "#fff",
-    border: "none",
-    borderRadius: "5px",
-    cursor: "pointer",
-  },
-  message: { marginTop: "10px", color: "green" },
-  link: { color: "#007bff", cursor: "pointer", textDecoration: "underline" },
-};

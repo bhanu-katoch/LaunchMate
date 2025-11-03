@@ -36,27 +36,9 @@ function App() {
         element={loggedIn ? <Chat /> : <Navigate to="/login" replace />}
       />
 
-      {/* Public routes */}
-      <Route
-        path="/login"
-        element={
-          !loggedIn ? (
-            <Login setLoggedIn={setLoggedIn} />
-          ) : (
-            <Navigate to="/" replace />
-          )
-        }
-      />
-      <Route
-        path="/signup"
-        element={
-          !loggedIn ? (
-            <Signup setLoggedIn={setLoggedIn} />
-          ) : (
-            <Navigate to="/" replace />
-          )
-        }
-      />
+      {/* Public routes (always accessible) */}
+      <Route path="/login" element={<Login setLoggedIn={setLoggedIn} />} />
+      <Route path="/signup" element={<Signup setLoggedIn={setLoggedIn} />} />
 
       {/* Catch-all redirect */}
       <Route

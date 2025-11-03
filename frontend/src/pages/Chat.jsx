@@ -1,264 +1,348 @@
 import { useState, useEffect } from "react";
 import { apiFetch } from "../api";
+import { motion, AnimatePresence } from "framer-motion";
+import {
+  Send,
+  Loader2,
+  Globe,
+  Rocket,
+  Factory,
+  ShoppingBag,
+  Megaphone,
+  DollarSign,
+  FileText,
+  Menu,
+  X,
+  PlusCircle,
+} from "lucide-react";
+
+const sectionIcons = {
+  market_research: Globe,
+  roadmap: Rocket,
+  production: Factory,
+  sales: ShoppingBag,
+  marketing: Megaphone,
+  financials: DollarSign,
+  pricing_recommendation: DollarSign,
+  summary: FileText,
+};
 
 export default function Chat() {
   const [prompt, setPrompt] = useState("");
-  const [response, setResponse] = useState(null);
-  const [parsedData, setParsedData] = useState(null);
   const [loading, setLoading] = useState(false);
-  const [showRaw, setShowRaw] = useState(false);
-  const [activeTab, setActiveTab] = useState(null);
+  const [data, setData] = useState(null);
+  const [error, setError] = useState("");
+  const [activeSection, setActiveSection] = useState(null);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [chats, setChats] = useState([]);
 
-  // new: history state
-  const [history, setHistory] = useState([]);
-  const [showHistory, setShowHistory] = useState(false);
-  const [loadingHistory, setLoadingHistory] = useState(false);
+  // Load saved chats
+  useEffect(() => {
+    const saved = localStorage.getItem("launchmate_chats");
+    if (saved) setChats(JSON.parse(saved));
+  }, []);
 
-  async function handleChat() {
+  // Save chats when updated
+  useEffect(() => {
+    localStorage.setItem("launchmate_chats", JSON.stringify(chats));
+  }, [chats]);
+
+  async function handleSend(e) {
+    e.preventDefault();
     if (!prompt.trim()) return;
+
     setLoading(true);
-    setResponse(null);
-    setParsedData(null);
-    setActiveTab(null);
+    setError("");
+    setData(null);
+    setActiveSection(null);
 
     try {
       const res = await apiFetch("/chat/send", {
         method: "POST",
         body: JSON.stringify({ message: prompt }),
       });
+      if (!res.success) throw new Error(res.error || "Invalid response");
 
-      let data = res.data;
-      if (typeof data === "string") {
-        try {
-          data = JSON.parse(data);
-        } catch {
-          // keep as string
-        }
-      }
+      const chatData = {
+        id: Date.now(),
+        title: prompt.slice(0, 40) + (prompt.length > 40 ? "..." : ""),
+        prompt,
+        data: res.data,
+        createdAt: new Date().toLocaleString(),
+      };
 
-      if (typeof data === "object" && data !== null) {
-        setParsedData(data);
-        setResponse(JSON.stringify(data, null, 2));
-        setActiveTab(Object.keys(data)[0]);
-      } else {
-        setResponse(String(data));
-      }
-
-      // refresh history automatically
-      fetchHistory();
+      setData(res.data);
+      setActiveSection(Object.keys(res.data)[0]);
+      setChats((prev) => [chatData, ...prev]); // prepend new chat
+      setPrompt(""); // clear input
     } catch (err) {
-      setResponse(`⚠️ Error: ${err.message}`);
+      setError(err.message || "Something went wrong.");
     } finally {
       setLoading(false);
     }
   }
 
-  async function fetchHistory() {
-    setLoadingHistory(true);
-    try {
-      const res = await apiFetch("/chat/history");
-      console.log("Chat history response:", res);
+  const sections = data ? Object.keys(data) : [];
 
-      const data = res; // ✅ No `.response`
-
-      if (data?.success && Array.isArray(data.chats)) {
-        setHistory(data.chats);
-      } else {
-        setHistory([]);
-      }
-    } catch (err) {
-      console.error("Failed to fetch history:", err);
-      setHistory([]);
-    } finally {
-      setLoadingHistory(false);
-    }
+  function handleLoadChat(chat) {
+    setData(chat.data);
+    setActiveSection(Object.keys(chat.data)[0]);
+    setSidebarOpen(false);
   }
 
-  // optional: fetch on first load
-  useEffect(() => {
-    fetchHistory();
-  }, []);
-
-  const renderValue = (value) => {
-    if (Array.isArray(value)) {
-      return (
-        <ul className="list-disc list-inside space-y-1">
-          {value.map((item, idx) => (
-            <li key={idx} className="ml-3">
-              {typeof item === "object" ? (
-                <div className="pl-3 border-l border-gray-600">
-                  {renderValue(item)}
-                </div>
-              ) : (
-                <span className="text-gray-200">{String(item)}</span>
-              )}
-            </li>
-          ))}
-        </ul>
-      );
-    }
-
-    if (typeof value === "object" && value !== null) {
-      return (
-        <div className="space-y-3">
-          {Object.entries(value).map(([key, val]) => (
-            <div
-              key={key}
-              className="p-3 bg-gray-800 rounded-lg border border-gray-700"
-            >
-              <h4 className="text-blue-300 font-semibold mb-1">
-                {key.replace(/_/g, " ")}
-              </h4>
-              {renderValue(val)}
-            </div>
-          ))}
-        </div>
-      );
-    }
-
-    return <p className="text-gray-200 whitespace-pre-line">{String(value)}</p>;
-  };
-
-  const renderTabContent = (data, tab) => {
-    const section = data[tab];
-    if (!section) return <p>No data available for this section.</p>;
-    return renderValue(section);
-  };
+  function handleNewChat() {
+    setData(null);
+    setActiveSection(null);
+    setPrompt("");
+    setSidebarOpen(false);
+  }
 
   return (
-    <div className="flex flex-col items-center p-6 space-y-4">
-      <h2 className="text-2xl font-semibold text-center">ProductLaunchGPT</h2>
+    <div className="fixed inset-0 flex bg-linear-to-b from-gray-50 to-gray-100 dark:from-[#121212] dark:to-[#1a1a1a] text-gray-900 dark:text-gray-100">
+      {/* Sidebar */}
+      {/* Sidebar + Backdrop */}
+      <AnimatePresence>
+        {sidebarOpen && (
+          <>
+            {/* Dim background overlay */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 0.5 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.3 }}
+              className="fixed inset-0 bg-black z-40"
+              onClick={() => setSidebarOpen(false)}
+            />
 
-      {/* Toggle between chat and history */}
-      <div className="flex gap-4">
-        <button
-          onClick={() => setShowHistory(false)}
-          className={`px-4 py-2 rounded-md ${
-            !showHistory
-              ? "bg-blue-700 text-white"
-              : "bg-gray-700 text-gray-300 hover:bg-gray-600"
-          }`}
-        >
-          Chat
-        </button>
-        <button
-          onClick={() => setShowHistory(true)}
-          className={`px-4 py-2 rounded-md ${
-            showHistory
-              ? "bg-blue-700 text-white"
-              : "bg-gray-700 text-gray-300 hover:bg-gray-600"
-          }`}
-        >
-          View History
-        </button>
-      </div>
-
-      {!showHistory ? (
-        <>
-          {/* Chat input area */}
-          <textarea
-            value={prompt}
-            onChange={(e) => setPrompt(e.target.value)}
-            placeholder="Describe your product idea..."
-            className="w-full md:w-2/3 p-3 border border-gray-300 rounded-lg focus:ring focus:ring-blue-300 focus:outline-none"
-            rows={5}
-          />
-
-          <button
-            onClick={handleChat}
-            disabled={loading}
-            className={`px-6 py-2 rounded-lg text-white ${
-              loading
-                ? "bg-gray-400 cursor-not-allowed"
-                : "bg-blue-600 hover:bg-blue-700"
-            }`}
-          >
-            {loading ? "Thinking..." : "Send"}
-          </button>
-
-          {response && (
-            <div className="w-full md:w-2/3">
-              <div className="flex justify-between items-center mb-3">
-                <h3 className="text-lg font-semibold text-gray-200">
-                  Response
-                </h3>
-                <button
-                  onClick={() => setShowRaw(!showRaw)}
-                  className="px-3 py-1 text-sm rounded-md bg-blue-700 text-white hover:bg-blue-800"
+            {/* Sidebar panel */}
+            <motion.aside
+              initial={{ x: -300 }}
+              animate={{ x: 0 }}
+              exit={{ x: -300 }}
+              transition={{
+                type: "spring",
+                stiffness: 80,
+                damping: 18,
+                mass: 1,
+              }}
+              className="fixed left-0 top-0 bottom-0 z-50 w-72 bg-white dark:bg-[#222] border-r border-gray-200 dark:border-gray-700 p-4 flex flex-col shadow-2xl"
+            >
+              <div className="flex justify-between items-center mb-4">
+                <h2 className="text-lg font-semibold text-indigo-600 dark:text-indigo-400">
+                  Previous Chats
+                </h2>
+                <motion.button
+                  whileHover={{ rotate: 90 }}
+                  whileTap={{ scale: 0.9 }}
+                  onClick={() => setSidebarOpen(false)}
+                  className="p-1 rounded hover:bg-gray-100 dark:hover:bg-[#333]"
                 >
-                  {showRaw ? "Show Beautiful View" : "Show Raw JSON"}
-                </button>
+                  <X size={20} />
+                </motion.button>
               </div>
 
-              <div className="bg-gray-900 text-green-200 font-mono text-sm rounded-lg p-4 overflow-auto whitespace-pre-wrap">
-                {showRaw ? (
-                  <pre>{response}</pre>
-                ) : parsedData ? (
-                  <div>
-                    <div className="flex flex-wrap gap-2 mb-4 border-b border-gray-700 pb-2">
-                      {Object.keys(parsedData).map((key) => (
-                        <button
-                          key={key}
-                          onClick={() => setActiveTab(key)}
-                          className={`px-4 py-2 rounded-t-lg text-sm font-medium transition-all ${
-                            activeTab === key
-                              ? "bg-blue-700 text-white"
-                              : "bg-gray-800 text-gray-300 hover:bg-gray-700"
-                          }`}
-                        >
-                          {key.replace(/_/g, " ")}
-                        </button>
-                      ))}
-                    </div>
+              <motion.button
+                whileHover={{ scale: 1.03 }}
+                whileTap={{ scale: 0.97 }}
+                onClick={handleNewChat}
+                className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-2 rounded-lg mb-4 transition"
+              >
+                <PlusCircle size={18} />
+                New Chat
+              </motion.button>
 
-                    <div className="p-4 bg-gray-900 rounded-lg border border-gray-700">
-                      {renderTabContent(parsedData, activeTab)}
-                    </div>
-                  </div>
-                ) : (
-                  <pre>{response}</pre>
+              <div className="flex-1 overflow-y-auto space-y-2">
+                {chats.length === 0 && (
+                  <p className="text-sm opacity-70">No chats yet.</p>
                 )}
+                {chats.map((chat) => (
+                  <motion.div
+                    key={chat.id}
+                    whileHover={{ scale: 1.02 }}
+                    onClick={() => handleLoadChat(chat)}
+                    className="cursor-pointer border border-gray-300 dark:border-gray-700 rounded-lg p-3 hover:bg-gray-100 dark:hover:bg-[#333] transition"
+                  >
+                    <p className="font-medium truncate">{chat.title}</p>
+                    <p className="text-xs opacity-60">{chat.createdAt}</p>
+                  </motion.div>
+                ))}
               </div>
+            </motion.aside>
+          </>
+        )}
+      </AnimatePresence>
+
+      {/* Main Content */}
+      <div className="flex-1 flex flex-col">
+        {/* Header */}
+        <header className="p-4 shadow-md bg-white dark:bg-[#222] flex justify-between items-center border-b border-gray-200 dark:border-gray-700">
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => setSidebarOpen(true)}
+              className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-[#333] transition"
+            >
+              <Menu />
+            </button>
+            <h1 className="text-2xl font-bold text-indigo-600 dark:text-indigo-400">
+              LaunchMate
+            </h1>
+          </div>
+          <p className="text-sm opacity-70">🚀 AI Product Launch Consultant</p>
+        </header>
+
+        {/* Main */}
+        <main className="flex-1 p-6 overflow-y-auto">
+          {!data && !loading && (
+            <p className="text-center opacity-70 mt-20 text-lg">
+              👋 Describe your product idea, and I’ll generate a full launch
+              plan.
+            </p>
+          )}
+
+          {loading && (
+            <div className="flex flex-col items-center mt-20 text-indigo-500 animate-pulse">
+              <Loader2 className="animate-spin mb-3" size={36} />
+              <p>Generating your launch plan...</p>
             </div>
           )}
-        </>
-      ) : (
-        // ✅ History view
-        <div className="w-full md:w-2/3 space-y-4 mt-4">
-          {loadingHistory ? (
-            <p className="text-gray-300">Loading history...</p>
-          ) : history.length === 0 ? (
-            <p className="text-gray-400">No previous chats found.</p>
-          ) : (
-            history
-              .slice()
-              .reverse()
-              .map((chat, i) => (
-                <div
-                  key={chat._id || i}
-                  className="p-4 bg-gray-800 rounded-lg border border-gray-700"
-                >
-                  <h4 className="text-lg font-semibold text-blue-400 mb-2">
-                    {chat.message}
-                  </h4>
-                  <p className="text-sm text-gray-400 mb-3">
-                    {new Date(chat.createdAt).toLocaleString()}
-                  </p>
 
-                  {chat.response ? (
-                    typeof chat.response === "object" ? (
-                      renderValue(chat.response)
-                    ) : (
-                      <p className="text-gray-200">{String(chat.response)}</p>
-                    )
-                  ) : (
-                    <p className="text-gray-400">No response stored.</p>
-                  )}
-                </div>
-              ))
+          {error && (
+            <div className="text-center text-red-500 mt-10 font-medium">
+              {error}
+            </div>
           )}
-        </div>
-      )}
+
+          {/* Section buttons */}
+          {data && (
+            <div className="flex flex-wrap justify-center gap-3 mb-6">
+              {sections.map((section) => {
+                const Icon = sectionIcons[section] || FileText;
+                const isActive = section === activeSection;
+                return (
+                  <button
+                    key={section}
+                    onClick={() => setActiveSection(section)}
+                    className={`flex items-center gap-2 px-4 py-2 rounded-full border transition-all duration-200 ${
+                      isActive
+                        ? "bg-indigo-600 text-white border-indigo-600 shadow-md"
+                        : "bg-white dark:bg-[#2c2c2c] border-gray-300 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-[#3a3a3a]"
+                    }`}
+                  >
+                    <Icon size={18} />
+                    <span className="capitalize">
+                      {section.replaceAll("_", " ")}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          )}
+
+          {/* Active card */}
+          <AnimatePresence mode="wait">
+            {data && activeSection && (
+              <motion.div
+                key={activeSection}
+                initial={{ opacity: 0, y: 20, scale: 0.98 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, y: -20, scale: 0.98 }}
+                transition={{ duration: 0.3 }}
+                className={`rounded-2xl shadow-md border border-gray-200 dark:border-gray-700 p-6 ${
+                  activeSection === "summary"
+                    ? "bg-linear-to-br from-indigo-600 to-indigo-500 text-white"
+                    : "bg-white dark:bg-[#2c2c2c]"
+                }`}
+              >
+                <div className="flex items-center gap-2 mb-4">
+                  {(() => {
+                    const Icon = sectionIcons[activeSection] || FileText;
+                    return (
+                      <Icon className="text-indigo-500 dark:text-indigo-400" />
+                    );
+                  })()}
+                  <h2
+                    className={`text-2xl font-semibold capitalize ${
+                      activeSection === "summary"
+                        ? "text-white"
+                        : "text-indigo-600 dark:text-indigo-400"
+                    }`}
+                  >
+                    {activeSection.replaceAll("_", " ")}
+                  </h2>
+                </div>
+                <SectionRenderer data={data[activeSection]} />
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </main>
+
+        {/* Input */}
+        <form
+          onSubmit={handleSend}
+          className="p-4 bg-white dark:bg-[#222] border-t border-gray-200 dark:border-gray-700 flex items-center gap-3"
+        >
+          <input
+            type="text"
+            placeholder="Describe your product idea..."
+            value={prompt}
+            onChange={(e) => setPrompt(e.target.value)}
+            className="flex-1 px-4 py-2 rounded-xl bg-gray-100 dark:bg-[#333] border border-gray-300 dark:border-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+          />
+          <button
+            type="submit"
+            disabled={loading}
+            className="bg-indigo-600 hover:bg-indigo-700 text-white p-2 rounded-xl transition disabled:opacity-50"
+          >
+            {loading ? (
+              <Loader2 className="animate-spin" size={20} />
+            ) : (
+              <Send size={20} />
+            )}
+          </button>
+        </form>
+      </div>
     </div>
   );
+}
+
+/* Recursively render nested content beautifully */
+function SectionRenderer({ data }) {
+  if (typeof data === "string") {
+    return (
+      <p className="leading-relaxed whitespace-pre-line text-gray-800 dark:text-gray-200">
+        {data}
+      </p>
+    );
+  }
+
+  if (Array.isArray(data)) {
+    return (
+      <ul className="list-disc pl-6 space-y-1">
+        {data.map((item, i) => (
+          <li key={i}>
+            <SectionRenderer data={item} />
+          </li>
+        ))}
+      </ul>
+    );
+  }
+
+  if (typeof data === "object" && data !== null) {
+    return (
+      <div className="space-y-3">
+        {Object.entries(data).map(([key, value]) => (
+          <div key={key}>
+            <p className="font-medium text-gray-900 dark:text-gray-100">
+              {key.replaceAll("_", " ")}:
+            </p>
+            <div className="pl-4 border-l border-gray-300 dark:border-gray-700 ml-1">
+              <SectionRenderer data={value} />
+            </div>
+          </div>
+        ))}
+      </div>
+    );
+  }
+
+  return <p>{String(data)}</p>;
 }
